@@ -1,0 +1,30 @@
+FROM quay.io/pypa/manylinux1_i686
+MAINTAINER Insight Software Consortium <community@itk.org>
+
+
+RUN yum erase git 'cmake*'  curl -y &&  yum install zlib-devel gettext -y
+
+WORKDIR /tmp/
+
+ADD https://cmake.org/files/v3.6/cmake-3.6.0.tar.gz \
+    https://www.openssl.org/source/openssl-1.0.2h.tar.gz \
+    https://www.kernel.org/pub/software/scm/git/git-2.8.2.tar.gz \
+    /tmp/
+
+#RUN cd /tmp  && wget --no-check-certificate http://curl.haxx.se/download/curl-7.50.1.tar.gz
+#ADD curl-7.48.0.tar.gz /tmp
+ADD https://curl.haxx.se/download/curl-7.50.1.tar.gz /tmp
+
+COPY build.sh ./
+RUN linux32 bash -v build.sh && rm -rf /tmp/*
+
+RUN yum erase zlib-devel gettext -y
+
+# Normal user, no password
+RUN useradd -m --password "" sitk
+
+USER sitk
+ENV HOME /tmp
+
+# User is expected to mount directory to "/io"
+ENTRYPOINT [ "/usr/bin/linux32", "/var/io/cmd.sh" ]
